@@ -1,0 +1,145 @@
+{
+  "api": {
+    "version": "1.0",
+    "routes": {
+      "/api/fee-types": {
+        "GET": {
+          "description": "Récupérer tous les types de frais ou un type de frais spécifique",
+          "queryParameters": {
+            "id": {
+              "type": "string",
+              "description": "ID du type de frais à récupérer (optionnel)"
+            }
+          },
+          "response": {
+            "type": "array",
+            "items": {
+              "id": "integer",
+              "name": "string",
+              "description": "string",
+              "pricings": "array"
+            }
+          }
+        },
+        "POST": {
+          "description": "Créer un nouveau type de frais",
+          "body": {
+            "name": "string",
+            "description": "string"
+          },
+          "response": {
+            "id": "integer",
+            "name": "string",
+            "description": "string"
+          }
+        },
+        "PUT": {
+          "description": "Modifier un type de frais existant",
+          "body": {
+            "id": "integer",
+            "name": "string",
+            "description": "string"
+          },
+          "response": {
+            "id": "integer",
+            "name": "string",
+            "description": "string"
+          }
+        },
+        "DELETE": {
+          "description": "Supprimer un type de frais",
+          "queryParameters": {
+            "id": {
+              "type": "string",
+              "required": true,
+              "description": "ID du type de frais à supprimer"
+            }
+          }
+        }
+      },
+      "/api/documents": {
+        "GET": {
+          "description": "Récupérer un document ou la liste des documents",
+          "queryParameters": {
+            "id": {
+              "type": "string",
+              "description": "ID du document à récupérer (optionnel)"
+            }
+          },
+          "response": {
+            "type": "array",
+            "items": {
+              "id": "integer",
+              "file_name": "string",
+              "file_type": "string",
+              "file_path": "string"
+            }
+          }
+        },
+        "POST": {
+          "description": "Uploader un nouveau document",
+          "body": {
+            "file": "File",
+            "description": "Le fichier à uploader"
+          },
+          "response": {
+            "id": "integer",
+            "file_name": "string",
+            "file_type": "string",
+            "file_path": "string"
+          }
+        },
+        "PUT": {
+          "description": "Modifier un document existant",
+          "body": {
+            "id": "integer",
+            "file": "File",
+            "description": "Le fichier à modifier"
+          },
+          "response": {
+            "id": "integer",
+            "file_name": "string",
+            "file_type": "string",
+            "file_path": "string"
+          }
+        },
+        "DELETE": {
+          "description": "Supprimer un document",
+          "queryParameters": {
+            "id": {
+              "type": "string",
+              "required": true,
+              "description": "ID du document à supprimer"
+            }
+          }
+        }
+      },
+      "/api/auth/login": {
+        "POST": {
+          "description": "Authentification utilisateur",
+          "body": {
+            "email": {
+              "type": "string",
+              "required": true,
+              "description": "Email de l'utilisateur"
+            },
+            "password": {
+              "type": "string",
+              "required": true,
+              "description": "Mot de passe de l'utilisateur"
+            }
+          },
+          "response": {
+            "token": "string",
+            "user": {
+              "id": "integer",
+              "email": "string",
+              "roles": "array",
+              "permissions": "array"
+            }
+          }
+        }
+      }
+    }
+  }
+}

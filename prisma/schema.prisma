@@ -1,0 +1,534 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Modèles de base
+model User {
+  id               Int      @id @default(autoincrement())
+  hierarchical_id  Int?
+  name             String
+  email            String   @unique
+  password         String
+  email_verified_at DateTime?
+  avatar           String?
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  // Relations
+  roles            UserRole[]
+  permissions      UserPermission[]
+  superior         User?    @relation("UserHierarchy", fields: [hierarchical_id], references: [id])
+  subordinates     User[]   @relation("UserHierarchy")
+  
+  // Relations avec autres modèles
+  payments_as_cashier    Payment[]
+  cash_register_sessions CashRegisterSession[]
+  validation_expenses    ValidationExpense[]
+  transactions          Transaction[]
+
+  @@map("users")
+}
+
+model Role {
+  id         Int      @id @default(autoincrement())
+  name       String   @unique
+  guard_name String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  // Relations
+  users       UserRole[]
+  permissions RolePermission[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id         Int      @id @default(autoincrement())
+  name       String   @unique
+  guard_name String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  // Relations
+  roles RolePermission[]
+  users UserPermission[]
+
+  @@map("permissions")
+}
+
+// Tables de liaison pour les relations many-to-many
+model UserRole {
+  user_id Int
+  role_id Int
+  model_type String @default("App\\Models\\User")
+  model_id   Int
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [role_id], references: [id], onDelete: Cascade)
+
+  @@id([user_id, role_id])
+  @@map("user_roles")
+}
+
+model RolePermission {
+  role_id       Int
+  permission_id Int
+
+  role       Role       @relation(fields: [role_id], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permission_id], references: [id], onDelete: Cascade)
+
+  @@id([role_id, permission_id])
+  @@map("role_permissions")
+}
+
+model UserPermission {
+  user_id       Int
+  permission_id Int
+
+  user       User       @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permission_id], references: [id], onDelete: Cascade)
+
+  @@id([user_id, permission_id])
+  @@map("user_permissions")
+}
+
+// Modèles académiques
+model AcademicYear {
+  id         Int      @id @default(autoincrement())
+  label      String
+  start_date String
+  end_date   String
+  active     Int      @default(1)
+  isCurrent  Int      @default(0)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  // Relations
+  registrations Registration[]
+  pricings      Pricing[]
+
+  @@map("academic_years")
+}
+
+model Level {
+  id          Int      @id @default(autoincrement())
+  label       String
+  slug        String   @unique
+  active      Int      @default(1)
+  class_count Int      @default(0)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  // Relations
+  classes  Classe[]
+  pricings Pricing[]
+
+  @@map("levels")
+}
+
+model Classe {
+  id                 Int      @id @default(autoincrement())
+  level_id           Int
+  label              String
+  student_number     String   @default("0")
+  max_student_number String
+  active             Int      @default(1)
+  created_at         DateTime @default(now())
+  updated_at         DateTime @updatedAt
+
+  // Relations
+  level         Level          @relation(fields: [level_id], references: [id])
+  registrations Registration[]
+
+  @@map("classes")
+}
+
+model AssignmentType {
+  id         Int      @id @default(autoincrement())
+  label      String
+  slug       String   @unique
+  active     Int      @default(1)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  // Relations
+  students Student[]
+  pricings Pricing[]
+
+  @@map("assignment_types")
+}
+
+// Modèles étudiants
+model Student {
+  id                  Int      @id @default(autoincrement())
+  assignment_type_id  Int
+  registration_number String   @unique
+  name                String
+  first_name          String
+  birth_date          String
+  tutor_name          String
+  tutor_first_name    String
+  tutor_number        String
+  status              String   @default("active")
+  photo               String?
+  sexe                String
+  active              Int      @default(1)
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+
+  // Relations
+  assignment_type AssignmentType    @relation(fields: [assignment_type_id], references: [id])
+  documents       Document[]
+  payments        Payment[]
+  registrations   Registration[]
+  tutors          StudentTutor[]
+
+  @@map("students")
+}
+
+model Tutor {
+  id           Int      @id @default(autoincrement())
+  name         String
+  first_name   String
+  phone_number String
+  sexe         String
+  type_tutor   String
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  // Relations
+  students StudentTutor[]
+
+  @@map("tutors")
+}
+
+model StudentTutor {
+  tutor_id        Int
+  student_id      Int
+  is_tutor_legal  Int      @default(0)
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  tutor   Tutor   @relation(fields: [tutor_id], references: [id], onDelete: Cascade)
+  student Student @relation(fields: [student_id], references: [id], onDelete: Cascade)
+
+  @@id([tutor_id, student_id])
+  @@map("student_tutors")
+}
+
+model Registration {
+  id                Int      @id @default(autoincrement())
+  class_id          Int
+  academic_year_id  Int
+  student_id        Int
+  registration_date String
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+
+  // Relations
+  classe        Classe       @relation(fields: [class_id], references: [id])
+  academic_year AcademicYear @relation(fields: [academic_year_id], references: [id])
+  student       Student      @relation(fields: [student_id], references: [id])
+
+  @@unique([student_id, academic_year_id])
+  @@map("registrations")
+}
+
+// Modèles documents
+model DocumentType {
+  id         Int      @id @default(autoincrement())
+  name       String
+  slug       String   @unique
+  active     Int      @default(1)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  // Relations
+  documents Document[]
+
+  @@map("document_types")
+}
+
+model Document {
+  id               Int      @id @default(autoincrement())
+  document_type_id Int
+  student_id       Int
+  label            String
+  path             String?
+  active           Int      @default(1)
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  // Relations
+  document_type DocumentType @relation(fields: [document_type_id], references: [id])
+  student       Student      @relation(fields: [student_id], references: [id])
+
+  @@map("documents")
+}
+
+// Modèles financiers
+model FeeType {
+  id         Int      @id @default(autoincrement())
+  label      String
+  slug       String   @unique
+  active     Int      @default(1)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  // Relations
+  pricings Pricing[]
+
+  @@map("fee_types")
+}
+
+model Pricing {
+  id                 Int      @id @default(autoincrement())
+  assignment_type_id Int
+  academic_years_id  Int
+  level_id           Int
+  fee_type_id        Int
+  label              String
+  amount             String
+  active             Int      @default(1)
+  created_at         DateTime @default(now())
+  updated_at         DateTime @updatedAt
+
+  // Relations
+  assignment_type AssignmentType @relation(fields: [assignment_type_id], references: [id])
+  academic_year   AcademicYear   @relation(fields: [academic_years_id], references: [id])
+  level           Level          @relation(fields: [level_id], references: [id])
+  fee_type        FeeType        @relation(fields: [fee_type_id], references: [id])
+  installments    Installment[]
+
+  @@map("pricings")
+}
+
+model Installment {
+  id         Int      @id @default(autoincrement())
+  pricing_id Int
+  amount_due String
+  due_date   String
+  status     String   @default("pending")
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  // Relations
+  pricing  Pricing   @relation(fields: [pricing_id], references: [id])
+  payments Payment[]
+
+  @@map("installments")
+}
+
+model PaymentMethod {
+  id         Int      @id @default(autoincrement())
+  name       String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  // Relations
+  payments PaymentMethodPayment[]
+
+  @@map("payment_methods")
+}
+
+model CashRegister {
+  id                   Int      @id @default(autoincrement())
+  cash_register_number String   @unique
+  active               Int      @default(1)
+  created_at           DateTime @default(now())
+  updated_at           DateTime @updatedAt
+
+  // Relations
+  payments  Payment[]
+  expenses  Expense[]
+  sessions  CashRegisterSession[]
+
+  @@map("cash_registers")
+}
+
+model Payment {
+  id               Int      @id @default(autoincrement())
+  student_id       Int
+  installment_id   Int
+  cash_register_id Int
+  cashier_id       Int
+  transaction_id   Int?
+  amount           String
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  // Relations
+  student       Student                @relation(fields: [student_id], references: [id])
+  installment   Installment            @relation(fields: [installment_id], references: [id])
+  cash_register CashRegister           @relation(fields: [cash_register_id], references: [id])
+  cashier       User                   @relation(fields: [cashier_id], references: [id])
+  transaction   Transaction?           @relation(fields: [transaction_id], references: [id])
+  payment_methods PaymentMethodPayment[]
+
+  @@map("payments")
+}
+
+model PaymentMethodPayment {
+  payment_id        Int
+  payment_method_id Int
+
+  payment        Payment       @relation(fields: [payment_id], references: [id], onDelete: Cascade)
+  payment_method PaymentMethod @relation(fields: [payment_method_id], references: [id], onDelete: Cascade)
+
+  @@id([payment_id, payment_method_id])
+  @@map("payment_method_payments")
+}
+
+model ExpenseType {
+  id         Int      @id @default(autoincrement())
+  name       String
+  slug       String   @unique
+  active     Int      @default(1)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  // Relations
+  expenses Expense[]
+
+  @@map("expense_types")
+}
+
+model Expense {
+  id               Int      @id @default(autoincrement())
+  expense_type_id  Int
+  cash_register_id Int
+  transaction_id   Int?
+  label            String
+  amount           String
+  expense_date     String
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  // Relations
+  expense_type  ExpenseType         @relation(fields: [expense_type_id], references: [id])
+  cash_register CashRegister        @relation(fields: [cash_register_id], references: [id])
+  transaction   Transaction?        @relation(fields: [transaction_id], references: [id])
+  validations   ValidationExpense[]
+
+  @@map("expenses")
+}
+
+model ValidationExpense {
+  id                Int      @id @default(autoincrement())
+  user_id           Int
+  expense_id        Int
+  validation_date   String
+  comment           String
+  validation_order  Int
+  validation_status String
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+
+  // Relations
+  user    User    @relation(fields: [user_id], references: [id])
+  expense Expense @relation(fields: [expense_id], references: [id])
+
+  @@map("validation_expenses")
+}
+
+model CashRegisterSession {
+  id               Int      @id @default(autoincrement())
+  user_id          Int
+  cash_register_id Int
+  opening_date     String
+  closing_date     String?
+  opening_amount   String
+  closing_amount   String?
+  status           String   @default("open")
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  // Relations
+  user          User           @relation(fields: [user_id], references: [id])
+  cash_register CashRegister   @relation(fields: [cash_register_id], references: [id])
+  transactions  Transaction[]
+
+  @@map("cash_register_sessions")
+}
+
+model Transaction {
+  id                      Int      @id @default(autoincrement())
+  user_id                 Int
+  cash_register_session_id Int
+  transaction_date        String
+  total_amount            String
+  transaction_type        String
+  created_at              DateTime @default(now())
+  updated_at              DateTime @updatedAt
+
+  // Relations
+  user                 User                @relation(fields: [user_id], references: [id])
+  cash_register_session CashRegisterSession @relation(fields: [cash_register_session_id], references: [id])
+  payments             Payment[]
+  expenses             Expense[]
+
+  @@map("transactions")
+}
+
+// Modèles de configuration
+model Setting {
+  id                        Int      @id @default(autoincrement())
+  registration_number_format String
+  establishment_phone_1     String
+  establishment_phone_2     String?
+  establishment_logo        String?
+  establishment_name        String
+  approval_number           String?
+  status                    String
+  address                   String
+  email                     String?
+  longitude                 String?
+  latitude                  String?
+  expense_approval_level    Int      @default(1)
+  primary_validator         String?
+  currency                  String?
+  created_at                DateTime @default(now())
+  updated_at                DateTime @updatedAt
+
+  @@map("settings")
+}
+
+// Modèles éducatifs
+model Matter {
+  id          Int      @id @default(autoincrement())
+  name        String
+  coefficient String
+  active      Int      @default(1)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  @@map("matters")
+}
+
+model TypeEvaluation {
+  id         Int      @id @default(autoincrement())
+  label      String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("type_evaluations")
+}
+
+
+
+// Modèle OTP pour l'authentification
+model OTP {
+  id        Int      @id @default(autoincrement())
+  otp       Int
+  email     String
+  expiresAt DateTime
+  created_at DateTime @default(now())
+
+  @@map("otps")
+}
