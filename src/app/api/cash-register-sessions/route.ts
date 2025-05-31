@@ -2,12 +2,12 @@ import { db, errorHandler, notFound, badRequest, successResponse, createdRespons
 
 export async function GET(request: Request) {
   try {
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get('id');
+    const searchParams = new URL(request.url).searchParams;
+    const id = parseInt(searchParams.get('id') || '');
 
     if (id) {
       const session = await db.cashRegisterSession.findUnique({
-        where: { id: parseInt(id) },
+        where: { id: id },
         include: {
           user: true,
           cash_register: true,
@@ -27,7 +27,7 @@ export async function GET(request: Request) {
     });
     return successResponse(sessions);
   } catch (error) {
-    return errorHandler(error);
+    return errorHandler(error instanceof Error ? error : new Error('Une erreur est survenue'));
   }
 }
 
@@ -50,18 +50,18 @@ export async function POST(request: Request) {
     });
     return createdResponse(session);
   } catch (error) {
-    return errorHandler(error);
+    return errorHandler(error instanceof Error ? error : new Error('Une erreur est survenue'));
   }
 }
 
 export async function PUT(request: Request) {
   try {
-    const { id } = new URL(request.url).searchParams;
+    const id = parseInt(new URL(request.url).searchParams.get('id') || '');
     if (!id) return badRequest('ID session requis');
 
     const data = await request.json();
     const session = await db.cashRegisterSession.update({
-      where: { id: parseInt(id) },
+      where: { id: id },
       data: {
         ...data,
         opening_date: data.opening_date ? new Date(data.opening_date) : undefined,
@@ -76,19 +76,19 @@ export async function PUT(request: Request) {
     });
     return successResponse(session);
   } catch (error) {
-    return errorHandler(error);
+    return errorHandler(error instanceof Error ? error : new Error('Une erreur est survenue'));
   }
 }
 
 export async function DELETE(request: Request) {
   try {
-    const { id } = new URL(request.url).searchParams;
+    const  id = parseInt(new URL(request.url).searchParams.get('id') || '');
     if (!id) return badRequest('ID session requis');
 
-    await db.cashRegisterSession.delete({ where: { id: parseInt(id) } });
+    await db.cashRegisterSession.delete({ where: { id: id } });
     return deletedResponse();
   } catch (error) {
-    return errorHandler(error);
+    return errorHandler(error instanceof Error ? error : new Error('Une erreur est survenue'));
   }
 }
 

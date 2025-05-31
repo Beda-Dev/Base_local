@@ -63,12 +63,12 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
-    const id = new URL(request.url).searchParams.get('id');
+    const id = parseInt(new URL(request.url).searchParams.get('id') || '');
     if (!id) return badRequest('ID étudiant requis');
 
     const data = await request.json();
     const student = await db.student.update({
-      where: { id: parseInt(id) },
+      where: { id: id },
       data: {
         ...data,
         birth_date: data.birth_date ? new Date(data.birth_date) : undefined,
@@ -90,10 +90,10 @@ export async function PUT(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const id = new URL(request.url).searchParams.get('id');
+    const id = parseInt(new URL(request.url).searchParams.get('id') || '');
     if (!id) return badRequest('ID étudiant requis');
 
-    await db.student.delete({ where: { id: parseInt(id) } });
+    await db.student.delete({ where: { id: id } });
     return deletedResponse();
   } catch (error: unknown) {
     return errorHandler(error instanceof Error ? error : new Error('Une erreur est survenue'));

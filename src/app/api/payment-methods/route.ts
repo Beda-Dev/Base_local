@@ -23,7 +23,7 @@ export async function GET(request: Request) {
     });
     return successResponse(paymentMethods);
   } catch (error) {
-    return errorHandler(error);
+    return errorHandler(error instanceof Error ? error : new Error('Une erreur est survenue'));
   }
 }
 
@@ -42,18 +42,18 @@ export async function POST(request: Request) {
     });
     return createdResponse(paymentMethod);
   } catch (error) {
-    return errorHandler(error);
+    return errorHandler(error instanceof Error ? error : new Error('Une erreur est survenue'));
   }
 }
 
 export async function PUT(request: Request) {
   try {
-    const { id } = new URL(request.url).searchParams;
+    const id = parseInt(new URL(request.url).searchParams.get('id') || '');
     if (!id) return badRequest('ID méthode de paiement requis');
 
     const data = await request.json();
     const paymentMethod = await db.paymentMethod.update({
-      where: { id: parseInt(id) },
+      where: { id: id },
       data: {
         ...data,
         updated_at: new Date(),
@@ -64,19 +64,19 @@ export async function PUT(request: Request) {
     });
     return successResponse(paymentMethod);
   } catch (error) {
-    return errorHandler(error);
+    return errorHandler(error instanceof Error ? error : new Error('Une erreur est survenue'));
   }
 }
 
 export async function DELETE(request: Request) {
   try {
-    const { id } = new URL(request.url).searchParams;
+    const id = parseInt(new URL(request.url).searchParams.get('id') || '');
     if (!id) return badRequest('ID méthode de paiement requis');
 
-    await db.paymentMethod.delete({ where: { id: parseInt(id) } });
+    await db.paymentMethod.delete({ where: { id: id } });
     return deletedResponse();
   } catch (error) {
-    return errorHandler(error);
+    return errorHandler(error instanceof Error ? error : new Error('Une erreur est survenue'));
   }
 }
 

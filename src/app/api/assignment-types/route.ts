@@ -2,7 +2,7 @@ import { db, errorHandler, notFound, badRequest, successResponse, createdRespons
 
 export async function GET(request: Request) {
   try {
-    const { searchParams } = new URL(request.url);
+    const searchParams = new URL(request.url).searchParams;
     const id = searchParams.get('id');
 
     if (id) {
@@ -25,7 +25,7 @@ export async function GET(request: Request) {
     });
     return successResponse(assignmentTypes);
   } catch (error) {
-    return errorHandler(error);
+    return errorHandler(error instanceof Error ? error : new Error('Une erreur est survenue'));
   }
 }
 
@@ -45,18 +45,18 @@ export async function POST(request: Request) {
     });
     return createdResponse(assignmentType);
   } catch (error) {
-    return errorHandler(error);
+    return errorHandler(error instanceof Error ? error : new Error('Une erreur est survenue'));
   }
 }
 
 export async function PUT(request: Request) {
   try {
-    const { id } = new URL(request.url).searchParams;
+    const id = parseInt(new URL(request.url).searchParams.get('id') || '');
     if (!id) return badRequest('ID type d\'attribution requis');
 
     const data = await request.json();
     const assignmentType = await db.assignmentType.update({
-      where: { id: parseInt(id) },
+      where: { id: id },
       data: {
         ...data,
         updated_at: new Date(),
@@ -68,19 +68,19 @@ export async function PUT(request: Request) {
     });
     return successResponse(assignmentType);
   } catch (error) {
-    return errorHandler(error);
+    return errorHandler(error instanceof Error ? error : new Error('Une erreur est survenue'));
   }
 }
 
 export async function DELETE(request: Request) {
   try {
-    const { id } = new URL(request.url).searchParams;
+    const id = parseInt(new URL(request.url).searchParams.get('id') || '');
     if (!id) return badRequest('ID type d\'attribution requis');
 
-    await db.assignmentType.delete({ where: { id: parseInt(id) } });
+    await db.assignmentType.delete({ where: { id: id } });
     return deletedResponse();
   } catch (error) {
-    return errorHandler(error);
+    return errorHandler(error instanceof Error ? error : new Error('Une erreur est survenue'));
   }
 }
 

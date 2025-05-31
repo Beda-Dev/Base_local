@@ -3,11 +3,11 @@ import { db, errorHandler, notFound, badRequest, successResponse, createdRespons
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const id = searchParams.get('id');
+    const id = parseInt(searchParams.get('id') || '');
 
     if (id) {
       const typeEvaluation = await db.typeEvaluation.findUnique({
-        where: { id: parseInt(id) },
+        where: { id: id },
       });
       if (!typeEvaluation) return notFound('Type d\'évaluation non trouvé');
       return successResponse(typeEvaluation);
@@ -16,7 +16,7 @@ export async function GET(request: Request) {
     const typeEvaluations = await db.typeEvaluation.findMany();
     return successResponse(typeEvaluations);
   } catch (error) {
-    return errorHandler(error);
+    return errorHandler(error instanceof Error ? error : new Error('Une erreur est survenue'));
   }
 }
 
@@ -32,18 +32,18 @@ export async function POST(request: Request) {
     });
     return createdResponse(typeEvaluation);
   } catch (error) {
-    return errorHandler(error);
+    return errorHandler(error instanceof Error ? error : new Error('Une erreur est survenue'));
   }
 }
 
 export async function PUT(request: Request) {
   try {
-    const { id } = new URL(request.url).searchParams;
+    const id = parseInt(new URL(request.url).searchParams.get('id') || '');
     if (!id) return badRequest('ID type d\'évaluation requis');
 
     const data = await request.json();
     const typeEvaluation = await db.typeEvaluation.update({
-      where: { id: parseInt(id) },
+      where: { id: id },
       data: {
         ...data,
         updated_at: new Date(),
@@ -51,19 +51,19 @@ export async function PUT(request: Request) {
     });
     return successResponse(typeEvaluation);
   } catch (error) {
-    return errorHandler(error);
+    return errorHandler(error instanceof Error ? error : new Error('Une erreur est survenue'));
   }
 }
 
 export async function DELETE(request: Request) {
   try {
-    const { id } = new URL(request.url).searchParams;
+    const id = parseInt(new URL(request.url).searchParams.get('id') || '');
     if (!id) return badRequest('ID type d\'évaluation requis');
 
-    await db.typeEvaluation.delete({ where: { id: parseInt(id) } });
+    await db.typeEvaluation.delete({ where: { id: id } });
     return deletedResponse();
   } catch (error) {
-    return errorHandler(error);
+    return errorHandler(error instanceof Error ? error : new Error('Une erreur est survenue'));
   }
 }
 

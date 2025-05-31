@@ -16,7 +16,7 @@ export async function GET(request: Request) {
     const otps = await db.otp.findMany();
     return successResponse(otps);
   } catch (error) {
-    return errorHandler(error);
+    return errorHandler(error instanceof Error ? error : new Error('Une erreur est survenue'));
   }
 }
 
@@ -32,19 +32,19 @@ export async function POST(request: Request) {
     });
     return createdResponse(otp);
   } catch (error) {
-    return errorHandler(error);
+    return errorHandler(error instanceof Error ? error : new Error('Une erreur est survenue'));
   }
 }
 
 export async function DELETE(request: Request) {
   try {
-    const { id } = new URL(request.url).searchParams;
+    const id = parseInt(new URL(request.url).searchParams.get('id') || '');
     if (!id) return badRequest('ID OTP requis');
 
-    await db.otp.delete({ where: { id: parseInt(id) } });
+    await db.otp.delete({ where: { id: id } });
     return deletedResponse();
   } catch (error) {
-    return errorHandler(error);
+    return errorHandler(error instanceof Error ? error : new Error('Une erreur est survenue'));
   }
 }
 

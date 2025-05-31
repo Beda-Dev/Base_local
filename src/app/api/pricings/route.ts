@@ -31,7 +31,7 @@ export async function GET(request: Request) {
     });
     return successResponse(pricings);
   } catch (error) {
-    return errorHandler(error);
+    return errorHandler(error instanceof Error ? error : new Error('Une erreur est survenue'));
   }
 }
 
@@ -54,18 +54,18 @@ export async function POST(request: Request) {
     });
     return createdResponse(pricing);
   } catch (error) {
-    return errorHandler(error);
+    return errorHandler(error instanceof Error ? error : new Error('Une erreur est survenue'));
   }
 }
 
 export async function PUT(request: Request) {
   try {
-    const { id } = new URL(request.url).searchParams;
+    const id = parseInt(new URL(request.url).searchParams.get('id') || '');
     if (!id) return badRequest('ID prix requis');
 
     const data = await request.json();
     const pricing = await db.pricing.update({
-      where: { id: parseInt(id) },
+      where: { id: id },
       data: {
         ...data,
         updated_at: new Date(),
@@ -80,19 +80,19 @@ export async function PUT(request: Request) {
     });
     return successResponse(pricing);
   } catch (error) {
-    return errorHandler(error);
+    return errorHandler(error instanceof Error ? error : new Error('Une erreur est survenue'));
   }
 }
 
 export async function DELETE(request: Request) {
   try {
-    const { id } = new URL(request.url).searchParams;
+    const id = parseInt(new URL(request.url).searchParams.get('id') || '');
     if (!id) return badRequest('ID prix requis');
 
-    await db.pricing.delete({ where: { id: parseInt(id) } });
+    await db.pricing.delete({ where: { id: id } });
     return deletedResponse();
   } catch (error) {
-    return errorHandler(error);
+    return errorHandler(error instanceof Error ? error : new Error('Une erreur est survenue'));
   }
 }
 

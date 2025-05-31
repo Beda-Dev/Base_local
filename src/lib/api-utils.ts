@@ -18,7 +18,7 @@ export const notFound = (message: string) =>
 export const badRequest = (message: string) =>
   new Response(JSON.stringify({ error: message }), { status: 400, headers: { 'Content-Type': 'application/json' } });
 
-export const successResponse = (data: Record<string, unknown>) =>
+export const successResponse = (data: Record<string, unknown> | Array<Record<string, unknown>>) =>
   new Response(JSON.stringify(data), { status: 200, headers: { 'Content-Type': 'application/json' } });
 
 export const createdResponse = (data: Record<string, unknown>) =>

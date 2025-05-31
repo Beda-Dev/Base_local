@@ -42,7 +42,7 @@ export async function PUT(request: Request) {
   }
 }
 
-export async function DELETE(request: Request) {
+export async function DELETE() {
   try {
     await db.setting.delete({ where: { id: 1 } });
     return deletedResponse();

@@ -36,7 +36,7 @@ export async function POST(request: Request) {
     // Vérifier si une autre année est déjà courante
     if (data.isCurrent) {
       const currentYear = await db.academicYear.findFirst({
-        where: { isCurrent: true }
+        where: { isCurrent: 1 }
       });
       if (currentYear) {
         return badRequest('Une année académique est déjà définie comme courante');
@@ -71,7 +71,7 @@ export async function PUT(request: Request) {
     if (data.isCurrent) {
       const currentYear = await db.academicYear.findFirst({
         where: {
-          isCurrent: true,
+          isCurrent: 1,
           id: { not: parseInt(id) }
         }
       });

@@ -59,13 +59,12 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
-    const searchParams = new URL(request.url).searchParams;
-    const id = searchParams.get('id');
+    const id = parseInt(new URL(request.url).searchParams.get('id') || '');
     if (!id) return badRequest('ID type de frais requis');
 
     const data = await request.json();
     const feeType = await db.feeType.update({
-      where: { id: parseInt(id) },
+      where: { id: id },
       data: {
         ...data,
         updated_at: new Date(),
@@ -82,11 +81,10 @@ export async function PUT(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const searchParams = new URL(request.url).searchParams;
-    const id = searchParams.get('id');
+    const id = parseInt(new URL(request.url).searchParams.get('id') || '');
     if (!id) return badRequest('ID type de frais requis');
 
-    await db.feeType.delete({ where: { id: parseInt(id) } });
+    await db.feeType.delete({ where: { id: id } });
     return deletedResponse();
   } catch (error) {
     return errorHandler(error instanceof Error ? error : new Error('Une erreur est survenue'));

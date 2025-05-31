@@ -3,11 +3,11 @@ import { db, errorHandler, notFound, badRequest, successResponse, createdRespons
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const id = searchParams.get('id');
+    const id = parseInt(searchParams.get('id') || '');
 
     if (id) {
       const expense = await db.expense.findUnique({
-        where: { id: parseInt(id) },
+        where: { id: id },
         include: {
           expense_type: true,
           cash_register: true,
@@ -29,7 +29,7 @@ export async function GET(request: Request) {
     });
     return successResponse(expenses);
   } catch (error) {
-    return errorHandler(error);
+    return errorHandler(error instanceof Error ? error : new Error('Une erreur est survenue'));
   }
 }
 
@@ -52,18 +52,18 @@ export async function POST(request: Request) {
     });
     return createdResponse(expense);
   } catch (error) {
-    return errorHandler(error);
+    return errorHandler(error instanceof Error ? error : new Error('Une erreur est survenue'));
   }
 }
 
 export async function PUT(request: Request) {
   try {
-    const { id } = new URL(request.url).searchParams;
+    const id = parseInt(new URL(request.url).searchParams.get('id') || '');
     if (!id) return badRequest('ID dépense requis');
 
     const data = await request.json();
     const expense = await db.expense.update({
-      where: { id: parseInt(id) },
+      where: { id: id },
       data: {
         ...data,
         expense_date: data.expense_date ? new Date(data.expense_date) : undefined,
@@ -78,19 +78,19 @@ export async function PUT(request: Request) {
     });
     return successResponse(expense);
   } catch (error) {
-    return errorHandler(error);
+    return errorHandler(error instanceof Error ? error : new Error('Une erreur est survenue'));
   }
 }
 
 export async function DELETE(request: Request) {
   try {
-    const { id } = new URL(request.url).searchParams;
+    const id = parseInt(new URL(request.url).searchParams.get('id') || '');
     if (!id) return badRequest('ID dépense requis');
 
-    await db.expense.delete({ where: { id: parseInt(id) } });
+    await db.expense.delete({ where: { id: id } });
     return deletedResponse();
   } catch (error) {
-    return errorHandler(error);
+    return errorHandler(error instanceof Error ? error : new Error('Une erreur est survenue'));
   }
 }
 
