@@ -2,12 +2,10 @@ import { NextResponse } from 'next/server';
 import { db, errorHandler, notFound, badRequest, successResponse, createdResponse, deletedResponse } from '@/lib/api-utils';
 import fs from 'fs';
 import path from 'path';
-import mime from 'mime-types';
-import { Readable } from 'stream';
 
 // Gestion des requêtes OPTIONS et CORS
 export async function OPTIONS() {
-  return new NextResponse(null, {
+  return new Response(null, {
     headers: {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
@@ -35,20 +33,6 @@ const ALLOWED_FILE_TYPES = [
   'image/png',
   'image/svg+xml'
 ];
-
-const MIME_TYPES = {
-  'text/plain': 'txt',
-  'application/pdf': 'pdf',
-  'application/msword': 'doc',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
-  'application/vnd.ms-excel': 'xls',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
-  'application/vnd.ms-powerpoint': 'ppt',
-  'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'pptx',
-  'image/jpeg': 'jpg',
-  'image/png': 'png',
-  'image/svg+xml': 'svg'
-};
 
 export async function GET(request: Request) {
   try {
@@ -205,3 +189,4 @@ export async function DELETE(request: Request) {
     return errorHandler(error instanceof Error ? error : new Error('Une erreur est survenue'));
   }
 }
+

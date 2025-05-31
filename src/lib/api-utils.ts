@@ -1,4 +1,3 @@
-import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
@@ -7,23 +6,23 @@ export const db = prisma;
 
 export const errorHandler = (error: Error) => {
   console.error('API Error:', error);
-  return NextResponse.json(
-    { error: 'Une erreur est survenue lors du traitement de la requête' },
-    { status: 500 }
+  return new Response(
+    JSON.stringify({ error: 'Une erreur est survenue lors du traitement de la requête' }),
+    { status: 500, headers: { 'Content-Type': 'application/json' } }
   );
 };
 
 export const notFound = (message: string) =>
-  NextResponse.json({ error: message }, { status: 404 });
+  new Response(JSON.stringify({ error: message }), { status: 404, headers: { 'Content-Type': 'application/json' } });
 
 export const badRequest = (message: string) =>
-  NextResponse.json({ error: message }, { status: 400 });
+  new Response(JSON.stringify({ error: message }), { status: 400, headers: { 'Content-Type': 'application/json' } });
 
-export const successResponse = (data: any) =>
-  NextResponse.json(data, { status: 200 });
+export const successResponse = (data: Record<string, unknown>) =>
+  new Response(JSON.stringify(data), { status: 200, headers: { 'Content-Type': 'application/json' } });
 
-export const createdResponse = (data: any) =>
-  NextResponse.json(data, { status: 201 });
+export const createdResponse = (data: Record<string, unknown>) =>
+  new Response(JSON.stringify(data), { status: 201, headers: { 'Content-Type': 'application/json' } });
 
 export const deletedResponse = () =>
-  NextResponse.json({ message: 'Suppression réussie' }, { status: 200 });
+  new Response(JSON.stringify({ message: 'Suppression réussie' }), { status: 200, headers: { 'Content-Type': 'application/json' } });

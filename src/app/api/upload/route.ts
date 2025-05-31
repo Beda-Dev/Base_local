@@ -1,4 +1,3 @@
-import { NextResponse } from 'next/server';
 import { db, errorHandler, badRequest, successResponse } from '@/lib/api-utils';
 import { join } from 'path';
 import { writeFile, unlink } from 'fs/promises';
@@ -47,3 +46,4 @@ export async function DELETE(request: Request) {
     return errorHandler(error instanceof Error ? error : new Error('Une erreur est survenue'));
   }
 }
+

@@ -1,9 +1,8 @@
-import { NextResponse } from 'next/server';
 import { db, errorHandler, notFound, badRequest, successResponse, createdResponse, deletedResponse } from '@/lib/api-utils';
 
 // Gestion des requêtes OPTIONS et CORS
 export async function OPTIONS() {
-  return new NextResponse(null, {
+  return new Response(null, {
     headers: {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
@@ -93,3 +92,4 @@ export async function DELETE(request: Request) {
     return errorHandler(error instanceof Error ? error : new Error('Une erreur est survenue'));
   }
 }
+

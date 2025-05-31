@@ -1,11 +1,10 @@
-import { NextResponse } from 'next/server';
 import { db, errorHandler, badRequest, successResponse } from '@/lib/api-utils';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
 // Gestion des requêtes OPTIONS et CORS
 export async function OPTIONS() {
-  return new NextResponse(null, {
+  return new Response(null, {
     headers: {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
@@ -60,3 +59,4 @@ export async function POST(request: Request) {
     return errorHandler(error instanceof Error ? error : new Error('Une erreur est survenue'));
   }
 }
+
