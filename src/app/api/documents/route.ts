@@ -46,10 +46,18 @@ export async function GET(request: Request) {
       });
       if (!document) return notFound('Document non trouvé');
 
+      // Construire le chemin complet du fichier
+      const filePath = path.join(process.cwd(), 'public/uploads', document.path || '');
+      
+      // Vérifier si le fichier existe
+      if (!fs.existsSync(filePath)) {
+        return notFound('Fichier non trouvé');
+      }
+
       // Lire le fichier
-      const fileStream = fs.createReadStream(document.file_path);
-      const fileName = document.file_name;
-      const fileType = document.file_type;
+      const fileStream = fs.createReadStream(filePath);
+      const fileName = document.label; // Utiliser le label comme nom du fichier
+      const fileType = document.path ? document.path.split('.').pop() : null;
 
       // Convertir le ReadStream en ReadableStream
       const readableStream = new ReadableStream({
@@ -68,10 +76,13 @@ export async function GET(request: Request) {
         }
       });
 
+      // Déterminer le type MIME par défaut
+      const contentType = fileType || 'application/octet-stream';
+
       // Créer la réponse
       const response = new NextResponse(readableStream, {
         headers: {
-          'Content-Type': fileType,
+          'Content-Type': contentType,
           'Content-Disposition': `attachment; filename="${fileName}"`,
         },
       });

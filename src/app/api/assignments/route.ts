@@ -3,63 +3,123 @@ import { db, errorHandler, notFound, badRequest, successResponse, createdRespons
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId');
-    const classId = searchParams.get('classId');
+    const student_id = searchParams.get('student_id');
+    const class_id = searchParams.get('class_id');
 
-    if (userId && classId) {
-      const assignment = await db.assignment.findUnique({
-        where: { userId_classId: { userId: parseInt(userId), classId: parseInt(classId) } },
-        include: {
-          user: true,
-          class: true
-        }
-      });
-      if (!assignment) return notFound('Affectation non trouvée');
-      return successResponse(assignment);
+    if (!student_id || !class_id) {
+      return badRequest('student_id and class_id are required parameters');
     }
 
-    const assignments = await db.assignment.findMany({
+    const student = await db.student.findUnique({
+      where: { id: parseInt(student_id) },
       include: {
-        user: true,
-        class: true
+        assignment_type: true,
+        registrations: {
+          where: { class_id: parseInt(class_id) },
+          include: {
+            classe: true
+          }
+        }
       }
     });
-    return successResponse(assignments);
-  } catch (error: unknown) {
+
+    if (!student) {
+      return notFound('Étudiant non trouvé');
+    }
+
+    return successResponse(student);
+  } catch (error) {
     return errorHandler(error instanceof Error ? error : new Error('Une erreur est survenue'));
   }
 }
 
 export async function POST(request: Request) {
   try {
-    const { userId, classId } = await request.json();
+    const { student_id, class_id } = await request.json();
 
-    if (!userId || !classId) {
-      return badRequest('ID utilisateur et ID classe sont requis');
+    if (!student_id || !class_id) {
+      return badRequest('ID étudiant et ID classe sont requis');
     }
 
-    const existingAssignment = await db.assignment.findUnique({
-      where: { userId_classId: { userId: parseInt(userId), classId: parseInt(classId) } }
-    });
-
-    if (existingAssignment) {
-      return badRequest('Cette affectation existe déjà');
-    }
-
-    const assignment = await db.assignment.create({
-      data: {
-        userId: parseInt(userId),
-        classId: parseInt(classId),
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
+    // Vérifier si l'étudiant existe
+    const student = await db.student.findUnique({
+      where: { id: parseInt(student_id) },
       include: {
-        user: true,
-        class: true
+        assignment_type: true
+      }
+    });
+    if (!student) {
+      return notFound('Étudiant non trouvé');
+    }
+
+    // Vérifier si la classe existe
+    const classe = await db.classe.findUnique({
+      where: { id: parseInt(class_id) }
+    });
+    if (!classe) {
+      return notFound('Classe non trouvée');
+    }
+
+    // Vérifier si l'attribution existe déjà
+    const existingRegistration = await db.registration.findFirst({
+      where: {
+        student_id: parseInt(student_id),
+        class_id: parseInt(class_id)
       }
     });
 
-    return createdResponse(assignment);
+    if (existingRegistration) {
+      return badRequest('Cette attribution existe déjà');
+    }
+
+    // Récupérer l'année académique actuelle
+    const currentAcademicYear = await db.academicYear.findFirst({
+      where: {
+        isCurrent: 1
+      }
+    });
+
+    if (!currentAcademicYear) {
+      return badRequest('Aucune année académique actuelle n\'est définie');
+    }
+
+    // Créer l'attribution
+    const registration = await db.registration.create({
+      data: {
+        student_id: parseInt(student_id),
+        class_id: parseInt(class_id),
+        academic_year_id: currentAcademicYear.id,
+        registration_date: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      },
+      include: {
+        student: {
+          include: {
+            assignment_type: true
+          },
+          select: {
+            id: true,
+            registration_number: true,
+            name: true,
+            first_name: true,
+            assignment_type: true
+          }
+        },
+        classe: true
+      }
+    });
+
+    return createdResponse({
+      ...registration,
+      student: {
+        ...registration.student,
+        registration_number: registration.student.registration_number,
+        firstName: registration.student.first_name,
+        lastName: registration.student.name,
+        role: registration.student.assignment_type
+      }
+    });
   } catch (error: unknown) {
     return errorHandler(error instanceof Error ? error : new Error('Une erreur est survenue'));
   }
@@ -68,15 +128,30 @@ export async function POST(request: Request) {
 export async function DELETE(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId');
-    const classId = searchParams.get('classId');
+    const student_id = searchParams.get('student_id');
+    const class_id = searchParams.get('class_id');
 
-    if (!userId || !classId) {
-      return badRequest('ID utilisateur et ID classe sont requis');
+    if (!student_id || !class_id) {
+      return badRequest('ID étudiant et ID classe sont requis');
     }
 
-    await db.assignment.delete({
-      where: { userId_classId: { userId: parseInt(userId), classId: parseInt(classId) } }
+    // Vérifier si l'attribution existe
+    const registration = await db.registration.findFirst({
+      where: {
+        student_id: parseInt(student_id),
+        class_id: parseInt(class_id)
+      }
+    });
+
+    if (!registration) {
+      return notFound('Affectation non trouvée');
+    }
+
+    // Supprimer l'attribution
+    await db.registration.delete({
+      where: {
+        id: registration.id
+      }
     });
 
     return deletedResponse();
